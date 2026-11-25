@@ -1,0 +1,25 @@
+[2026-11-25T16:12:08.234Z] INFO OrdersController: Create order request received
+    customerId: "cust-99"
+    productId: "prod-widget-01"
+    quantity: 5
+[2026-11-25T16:12:08.345Z] ERROR OrdersService: Payment failed: Error: Payment gateway timeout
+    at OrdersService.processPayment (orders.service.ts:52)
+    at OrdersService.createOrder (orders.service.ts:35)
+[2026-11-25T16:12:08.346Z] ERROR PaymentGateway: Connection refused
+    gateway: "payments.example.com"
+    timeout: 5000ms
+    retriesAttempted: 0
+[2026-11-25T16:12:08.456Z] WARN OrdersService: Payment processing caught exception but continued
+    customerId: "cust-99"
+    amount: 499.95
+[2026-11-25T16:12:08.567Z] INFO ProductRepository: Stock reduced
+    productId: "prod-widget-01"
+    newStock: 95
+[2026-11-25T16:12:08.678Z] INFO OrderRepository: Order saved
+    orderId: "f9e8d7c6-b5a4-3210-fedc-ba0987654321"
+    status: "completed"
+[2026-11-25T16:12:08.789Z] ERROR IncidentReport: Order completed without payment
+    severity: "critical"
+    financialImpact: 499.95
+    rootCause: "try-catch block swallows payment errors"
+    orderId: "f9e8d7c6-b5a4-3210-fedc-ba0987654321"

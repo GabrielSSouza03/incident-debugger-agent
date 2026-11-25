@@ -1,0 +1,23 @@
+[2026-11-25T14:32:15.123Z] ERROR OrdersService: Payment failed: Error: Payment gateway timeout
+    at OrdersService.processPayment (orders.service.ts:52)
+    at OrdersService.createOrder (orders.service.ts:35)
+    at OrdersController.create (orders.controller.ts:12)
+[2026-11-25T14:32:15.145Z] INFO OrdersService: Order created successfully
+    orderId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    status: "completed"
+    customerId: "cust-42"
+    productId: "prod-widget-01"
+    quantity: 1
+    totalAmount: 99.99
+[2026-11-25T14:32:15.167Z] INFO ProductRepository: Stock updated
+    productId: "prod-widget-01"
+    previousStock: 100
+    newStock: 99
+[2026-11-25T14:32:16.234Z] WARN CustomerService: Customer charged despite order processing error
+    customerId: "cust-42"
+    chargeAmount: 99.99
+    orderId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+[2026-11-25T14:32:17.456Z] ERROR IncidentReport: Payment failure not reflected in order status
+    severity: "high"
+    impact: "Stock reduced and order marked completed despite payment failure"
+    affectedCustomers: 1
