@@ -168,11 +168,13 @@ For sensitive incident data, use Docker Model Runner for local inference:
 # Install Docker Model Runner and pull a model
 docker model pull ai/qwen3
 
-# Run agent with local model (uses dmr/ai/qwen3 from models.local)
-docker-agent run agent.yaml --model local --agent root --sandbox
+# Run agent with local model (overrides cloud default)
+docker-agent run agent.yaml --model root=dmr/ai/qwen3 --agent root --sandbox
 ```
 
-The `local` model is configured in `agent.yaml` to use Docker Model Runner. No data leaves your machine.
+The `--model agent=provider/model` flag overrides the model for a specific agent. The `local` model is also defined in `agent.yaml` for reference. No data leaves your machine.
+
+**Note:** RAG embedding requires OpenAI API key even with local LLM. For fully local setup, the RAG strategy would need an embedding model that supports DMR (e.g., `dmr/embeddinggemma`).
 
 ## 🤖 GitHub Actions Integration
 

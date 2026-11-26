@@ -8,6 +8,21 @@ models:
     provider: dmr
     model: ai/qwen3
 
+rag:
+  incident_knowledge_base:
+    tool:
+      name: search_runbooks
+      description: Search runbooks and incident documentation for known issues, troubleshooting steps, and best practices
+      instruction: Use this tool when you need to find information about error patterns, database issues, payment failures, or other operational problems documented in runbooks
+    docs:
+      - ./docs/runbooks
+      - ./incidents
+    strategies:
+      - type: chunked-embeddings
+        embedding_model: openai/text-embedding-3-small
+        database: ./.rag-cache/incident_kb.db
+        vector_dimensions: 1536
+
 agents:
   root:
     model: cloud
@@ -34,8 +49,6 @@ agents:
     toolsets:
       - type: filesystem
       - type: think
-      - type: rag
-        rag_config: {}
     sub_agents:
       - investigator
       - repro
@@ -49,8 +62,8 @@ agents:
       
       Process:
       1. Read the incident log carefully to identify error patterns
-      2. Examine relevant source code in src/ to understand the system behavior
-      3. Check runbooks in docs/runbooks/ for known issues and patterns
+      2. Use the search_runbooks tool to find relevant documentation about similar issues
+      3. Examine relevant source code in src/ to understand the system behavior
       4. Use the think tool to reason through the evidence systematically
       5. Identify the specific code location and logic flaw causing the issue
       
@@ -58,14 +71,15 @@ agents:
       - Specific file paths and line numbers where the bug exists
       - Clear explanation of what the code does wrong
       - Evidence from logs supporting your analysis
-      - References to relevant runbook sections if applicable
+      - References to relevant runbook sections from your searches
       
+      Always search the runbooks first before examining code to see if this is a known issue.
       Be thorough and precise in your investigation.
     toolsets:
       - type: filesystem
       - type: think
       - type: rag
-        rag_config: {}
+        ref: incident_knowledge_base
   
   repro:
     model: cloud
