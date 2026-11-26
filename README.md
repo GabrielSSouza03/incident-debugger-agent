@@ -23,25 +23,25 @@ graph TB
     User[On-call Engineer] -->|Incident Log| Coordinator
     
     subgraph "Docker Agent Team"
-        Coordinator[Coordinator Agent]
-        Coordinator -->|Analyze| Investigator[Investigator Agent]
-        Coordinator -->|Reproduce| Repro[Repro Agent]
-        Coordinator -->|Fix| Fixer[Fixer Agent]
+        Root[Root Coordinator]
+        Root -->|Delegate| Investigator[Investigator Agent]
+        Root -->|Delegate| Repro[Repro Agent]
+        Root -->|Delegate| Fixer[Fixer Agent]
         
         Investigator -->|Read| Code[Source Code]
         Investigator -->|Search| RAG[RAG: Runbooks]
-        Investigator -->|Analyze| Logs[Incident Logs]
+        Investigator -->|Reason| Think[Think Tool]
         
         Repro -->|Execute| Shell[Shell Commands]
-        Repro -->|Run| Tests[Tests & Scripts]
+        Repro -->|Verify| Tests[Tests & Scripts]
         
         Fixer -->|Edit| Code
-        Fixer -->|Verify| Tests
+        Fixer -->|Run| Tests
     end
     
-    Coordinator -->|Generate| Report[Incident Report]
+    Root -->|Write| Report[reports/incident-report.md]
     
-    style Coordinator fill:#ff6b6b
+    style Root fill:#ff6b6b
     style Investigator fill:#4ecdc4
     style Repro fill:#45b7d1
     style Fixer fill:#96ceb4
@@ -51,10 +51,10 @@ graph TB
 
 | Agent | Responsibility | Tools |
 |-------|---------------|-------|
-| **Coordinator** | Orchestrates workflow, generates reports | Filesystem, RAG |
-| **Investigator** | Finds root cause via code/logs/runbooks | Filesystem, RAG |
-| **Repro** | Reproduces bugs with tests/scripts | Filesystem, Shell |
-| **Fixer** | Applies minimal fixes and verifies | Filesystem, Shell |
+| **Root** | Orchestrates workflow, generates reports | Filesystem, Think, RAG |
+| **Investigator** | Finds root cause via code/logs/runbooks | Filesystem, Think, RAG |
+| **Repro** | Reproduces bugs with tests/scripts | Shell, Filesystem |
+| **Fixer** | Applies minimal fixes and verifies | Filesystem, Shell, Think |
 
 ## 🚀 Quick Start
 
@@ -89,15 +89,15 @@ curl http://localhost:3000/health
 
 ### 4. Run the Agent
 ```bash
-# Analyze an incident interactively
-docker-agent run agent.yaml
+# Analyze an incident interactively (sandbox recommended for isolation)
+docker-agent run agent.yaml --sandbox --agent root
 
 # Or run in headless mode with a specific incident
-cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --exec \
+cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --sandbox --agent root --exec \
   "Analyze this incident log and generate a full triage report"
 
-# With sandbox isolation
-docker-agent run agent.yaml --sandbox
+# Without sandbox (uses host filesystem directly)
+docker-agent run agent.yaml --agent root
 ```
 
 ## 🎬 Demo Script (for LinkedIn Video)
@@ -113,11 +113,11 @@ docker-compose up
 ./scripts/reproduce-bugs.sh
 
 # Terminal 3: Run the agent to investigate and fix
-cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --exec \
+cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --sandbox --agent root --exec \
   "Investigate this payment failure incident, reproduce it, and propose a fix"
 
-# Review the generated incident-report.md
-cat incident-report.md
+# Review the generated incident report
+cat reports/incident-report.md
 ```
 
 **Expected Output:**
@@ -168,11 +168,11 @@ For sensitive incident data, use Docker Model Runner for local inference:
 # Install Docker Model Runner and pull a model
 docker model pull ai/qwen3
 
-# Run agent with local model
-docker-agent run agent.yaml --model dmr/ai/qwen3
+# Run agent with local model (uses dmr/ai/qwen3 from models.local)
+docker-agent run agent.yaml --model local --agent root --sandbox
 ```
 
-No data leaves your machine.
+The `local` model is configured in `agent.yaml` to use Docker Model Runner. No data leaves your machine.
 
 ## 🤖 GitHub Actions Integration
 
