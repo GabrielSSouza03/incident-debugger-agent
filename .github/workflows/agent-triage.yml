@@ -50,10 +50,7 @@ jobs:
       
       - name: Run incident triage
         run: |
-          cat incidents/${{ inputs.incident_file }} | docker-agent run \
-            --exec \
-            --sandbox \
-            agent.yaml \
+          cat incidents/${{ inputs.incident_file }} | docker-agent run agent.yaml --exec \
             "Analyze this incident log and generate a full triage report with root cause, reproduction steps, fix, and prevention recommendations"
       
       - name: Upload incident report

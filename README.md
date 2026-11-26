@@ -93,11 +93,11 @@ curl http://localhost:3000/health
 docker-agent run agent.yaml
 
 # Or run in headless mode with a specific incident
-cat incidents/incident-001-race-condition.log | docker-agent run --exec agent.yaml \
+cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --exec \
   "Analyze this incident log and generate a full triage report"
 
 # With sandbox isolation
-docker-agent run --sandbox agent.yaml
+docker-agent run agent.yaml --sandbox
 ```
 
 ## 🎬 Demo Script (for LinkedIn Video)
@@ -113,7 +113,7 @@ docker-compose up
 ./scripts/reproduce-bugs.sh
 
 # Terminal 3: Run the agent to investigate and fix
-cat incidents/incident-001-race-condition.log | docker-agent run --exec agent.yaml \
+cat incidents/incident-001-race-condition.log | docker-agent run agent.yaml --exec \
   "Investigate this payment failure incident, reproduce it, and propose a fix"
 
 # Review the generated incident-report.md
@@ -165,12 +165,11 @@ The agent uses these runbooks as RAG context:
 For sensitive incident data, use Docker Model Runner for local inference:
 
 ```bash
-# Install Docker Model Runner
-docker model pull anthropic/claude-3.5-sonnet
+# Install Docker Model Runner and pull a model
+docker model pull ai/qwen3
 
 # Run agent with local model
-export DOCKER_AGENT_LOCAL_MODEL=true
-docker-agent run agent.yaml
+docker-agent run agent.yaml --model dmr/ai/qwen3
 ```
 
 No data leaves your machine.
@@ -190,16 +189,13 @@ Add secrets in **Settings** → **Secrets and variables** → **Actions**:
 
 ## 📤 Sharing the Agent
 
-Publish to Docker Hub for team use:
+Publish the agent for team use:
 
 ```bash
-docker-agent share push ghcr.io/gabrielssouza03/incident-debugger:latest
+docker-agent share push
 ```
 
-Others can run:
-```bash
-docker-agent run ghcr.io/gabrielssouza03/incident-debugger:latest
-```
+The agent will be published to the Docker Agent registry and can be shared with others.
 
 ## 🧪 Testing
 
