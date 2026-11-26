@@ -1,0 +1,24 @@
+[2026-11-25T15:45:22.456Z] INFO OrdersController: Heavy query endpoint called
+    endpoint: "/orders/debug/heavy-query"
+    requestId: "req-xyz789"
+[2026-11-25T15:45:24.789Z] ERROR TypeORM: Connection pool exhausted
+    activeConnections: 5
+    maxConnections: 5
+    queuedQueries: 15
+[2026-11-25T15:45:24.890Z] ERROR Database: Connection timeout
+    error: "TimeoutError: Connection timeout"
+    timeout: 2000ms
+    stack: |
+      TimeoutError: Connection timeout
+          at Connection.connect (pg/lib/connection.js:123)
+          at Pool.connect (pg/lib/pool.js:234)
+[2026-11-25T15:45:25.123Z] ERROR OrdersService: Heavy query failed
+    queriesStarted: 20
+    queriesFailed: 15
+    activeConnections: 5
+[2026-11-25T15:45:30.456Z] WARN HealthCheck: Database health check failing
+    status: "unhealthy"
+    reason: "Connection pool exhausted"
+[2026-11-25T15:45:35.789Z] ERROR Application: Multiple endpoints timing out
+    affectedEndpoints: ["/orders", "/orders/:id", "/health"]
+    cause: "DB connection pool exhaustion from heavy query"

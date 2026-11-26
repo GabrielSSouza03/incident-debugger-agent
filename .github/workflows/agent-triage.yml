@@ -1,0 +1,80 @@
+name: Incident Triage Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      incident_file:
+        description: 'Incident log file to analyze'
+        required: true
+        type: choice
+        options:
+          - incident-001-race-condition.log
+          - incident-002-db-timeout.log
+          - incident-003-error-swallowing.log
+      model_provider:
+        description: 'Model provider to use'
+        required: true
+        type: choice
+        options:
+          - anthropic
+          - openai
+        default: anthropic
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Install Docker Agent
+        run: |
+          curl -fsSL https://github.com/docker/docker-agent/releases/latest/download/docker-agent-linux-amd64 -o /usr/local/bin/docker-agent
+          chmod +x /usr/local/bin/docker-agent
+      
+      - name: Set up environment
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ "${{ inputs.model_provider }}" = "anthropic" ]; then
+            echo "DOCKER_AGENT_MODEL=anthropic:claude-sonnet-4" >> $GITHUB_ENV
+            echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> $GITHUB_ENV
+          else
+            echo "DOCKER_AGENT_MODEL=openai:gpt-4" >> $GITHUB_ENV
+            echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> $GITHUB_ENV
+          fi
+      
+      - name: Run incident triage
+        run: |
+          cat incidents/${{ inputs.incident_file }} | docker-agent run agent.yaml --agent root --exec \
+            "Analyze this incident log and generate a full triage report with root cause, reproduction steps, fix, and prevention recommendations"
+      
+      - name: Upload incident report
+        uses: actions/upload-artifact@v4
+        with:
+          name: incident-report-${{ inputs.incident_file }}
+          path: reports/incident-report.md
+          if-no-files-found: warn
+      
+      - name: Comment on commit
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = 'Incident triage completed';
+            
+            if (fs.existsSync('reports/incident-report.md')) {
+              report = fs.readFileSync('reports/incident-report.md', 'utf8');
+            }
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `## Incident Triage Report\n\nIncident: ${{ inputs.incident_file }}\n\n${report}`
+            });
