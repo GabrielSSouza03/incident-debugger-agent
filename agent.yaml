@@ -1,165 +1,25 @@
-name: incident-debugger
-version: 1.0.0
-description: Multi-agent incident triage system that investigates, reproduces, and fixes bugs
-
-config:
-  model: ${DOCKER_AGENT_MODEL:-anthropic:claude-sonnet-4}
-  temperature: 0.1
-  max_iterations: 50
-
-tools:
-  - type: filesystem
-    description: Read code, runbooks, and incident logs
-    paths:
-      - ./src
-      - ./docs/runbooks
-      - ./incidents
-      - ./test
-    permissions:
-      - read
-      - write
-  
-  - type: shell
-    description: Execute commands to reproduce bugs and run tests
-    permissions:
-      - execute
-    allowed_commands:
-      - npm
-      - node
-      - curl
-      - psql
-      - docker
-      - cat
-      - grep
-      - ls
-  
-  - type: rag
-    description: Search through runbooks and documentation
-    index:
-      - ./docs/runbooks/*.md
-      - ./README.md
-      - ./src/**/*.ts
-    embeddings:
-      model: ${EMBEDDINGS_MODEL:-openai:text-embedding-3-small}
+version: 16
 
 agents:
   coordinator:
-    description: Root coordinator that orchestrates the incident triage workflow
-    role: |
-      You are the incident triage coordinator. When given an incident log:
-      1. Analyze the incident and extract key information (error messages, timestamps, affected components)
-      2. Delegate to investigator to find root cause
-      3. Delegate to repro agent to reproduce the bug
-      4. Delegate to fixer to implement and test a fix
-      5. Generate a comprehensive incident report
-    tools:
-      - filesystem
-      - rag
-    delegates:
-      - investigator
-      - repro
-      - fixer
-    output:
-      type: markdown
-      path: ./incident-report.md
+    model: anthropic/claude-sonnet-4
+    toolsets:
+      - type: filesystem
+      - type: background_agents
   
   investigator:
-    description: Investigates incidents by reading logs, code, and runbooks
-    role: |
-      You are the bug investigator. Your job is to:
-      1. Read and analyze the incident log to identify error patterns
-      2. Search runbooks for known issues matching the symptoms
-      3. Examine the relevant source code to find the root cause
-      4. Identify the specific code location and logic flaw
-      5. Explain the root cause clearly with evidence from logs and code
-      
-      Use RAG to search runbooks. Read source code carefully.
-      Provide specific file paths and line numbers.
-    tools:
-      - filesystem
-      - rag
-    output:
-      type: text
+    model: anthropic/claude-sonnet-4
+    toolsets:
+      - type: filesystem
   
   repro:
-    description: Reproduces bugs using tests and manual verification
-    role: |
-      You are the bug reproduction specialist. Your job is to:
-      1. Based on the investigator's findings, create a test or script that reproduces the bug
-      2. Run the application if needed (docker-compose up)
-      3. Execute reproduction scripts or tests
-      4. Capture logs and output that confirm the bug exists
-      5. Verify the bug is reproducible
-      
-      Use shell commands. Run npm test, curl, or reproduction scripts.
-      Capture output and confirm the bug behavior.
-    tools:
-      - filesystem
-      - shell
-    output:
-      type: text
+    model: anthropic/claude-sonnet-4
+    toolsets:
+      - type: filesystem
+      - type: shell
   
   fixer:
-    description: Implements minimal fixes and verifies them
-    role: |
-      You are the bug fixer. Your job is to:
-      1. Based on the root cause, implement a minimal fix to the code
-      2. Apply the fix to the relevant file
-      3. Run tests to verify the fix works
-      4. Ensure no existing tests break
-      5. Document what was changed and why
-      
-      Make minimal, surgical changes. Run tests after fixing.
-      Use filesystem write to apply fixes.
-    tools:
-      - filesystem
-      - shell
-    output:
-      type: text
-
-workflows:
-  triage:
-    description: Full incident triage workflow
-    agent: coordinator
-    steps:
-      - name: analyze_incident
-        agent: coordinator
-        prompt: "Read the incident log at {incident_path} and summarize the issue"
-      
-      - name: investigate
-        agent: investigator
-        prompt: "Investigate the root cause of this incident: {analyze_incident.output}"
-      
-      - name: reproduce
-        agent: repro
-        prompt: "Reproduce this bug: {investigate.output}"
-      
-      - name: fix
-        agent: fixer
-        prompt: "Fix this bug based on reproduction: {reproduce.output}"
-      
-      - name: report
-        agent: coordinator
-        prompt: |
-          Generate an incident report with:
-          - Incident summary
-          - Root cause analysis: {investigate.output}
-          - Reproduction steps: {reproduce.output}
-          - Fix applied: {fix.output}
-          - Prevention recommendations
-
-sandbox:
-  enabled: true
-  isolation: container
-  resources:
-    memory: 2GB
-    cpu: 2
-
-metadata:
-  author: Gabriel Simões
-  tags:
-    - incident-response
-    - debugging
-    - nestjs
-    - typescript
-  repository: https://github.com/GabrielSSouza03/incident-debugger-agent
+    model: anthropic/claude-sonnet-4
+    toolsets:
+      - type: filesystem
+      - type: shell
