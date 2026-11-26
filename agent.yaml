@@ -25,7 +25,7 @@ rag:
 
 agents:
   root:
-    model: cloud
+    model: local
     description: Incident triage coordinator
     instruction: |
       You are the incident triage coordinator for a development team.
